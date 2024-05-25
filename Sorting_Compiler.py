@@ -5,7 +5,7 @@ from urllib.parse import urljoin, urlencode
 import Filter, Compiler
 
 class Sorting_Compiler:
-    def __init__(self, sorting_parameters: list[str] = None, filtered_lectures_df: pd.DataFrame = None, apigpa_url: str = None, prereq_freq_dict: dict = None):
+    def __init__(self, sorting_parameters: list[str] = None, filtered_lectures_df: pd.DataFrame = None, apigpa_url: str = None):
         self.sorting_parameters = sorting_parameters #avg gpa, avg rating, avg difficulty, would take again, prereq frequency
         self.filtered_lectures_df = filtered_lectures_df
         self.headers = {"User-Agent": "Microsoft Edge/92.0.902.73"}
@@ -15,7 +15,9 @@ class Sorting_Compiler:
         self.rating_dict = dict()
         self.difficulty_dict = dict()
         self.would_take_again_dict = dict()
-        self.prereq_freq_dict = dict()
+    
+    def get_filtered_lectures_df(self) -> pd.DataFrame:
+        return self.filtered_lectures_df
 
     def get_gpa_dict(self) -> dict:
         return self.gpa_dict
@@ -73,9 +75,9 @@ class Sorting_Compiler:
         professor = rmp.get_professor_by_school_and_name(
             rmp.get_school_by_name("UC Irvine"), instructor)
         if professor is not None and instructor not in self.rating_dict:
-            self.rating_dict[instructor] = professor.rating
-            self.difficulty_dict[instructor] = professor.difficulty
-            self.would_take_again_dict[instructor] = professor.would_take_again
+            self.rating_dict[instructor] = professor.rating if professor.rating is not None else 0
+            self.difficulty_dict[instructor] = professor.difficulty if professor.difficulty is not None else 0
+            self.would_take_again_dict[instructor] = professor.would_take_again if professor.would_take_again is not None else 0
 
     
 
