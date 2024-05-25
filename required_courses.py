@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
 from datetime import datetime
+import json
 
 WEBCAT_BASE_URL = "https://catalogue.uci.edu/donaldbrenschoolofinformationandcomputersciences/departmentofcomputerscience/computerscience_bs/#requirementstext"
 
@@ -21,7 +22,7 @@ class Compiler:
 
         self.headers = {"User-Agent": "Microsoft Edge/92.0.902.73"}
         self.year = datetime.now().year
-        self.quarter = "Fall"
+        self.quarter = None
 
         self._webcat_html_doc = None # might need for later
         # self._websoc_html_doc = None
@@ -57,7 +58,7 @@ class Compiler:
     # def compile_available_required_courses(self):
     #     html_parser = bs(self._websoc_html_doc, 'html.parser')
 
-    def _get_soc_for_one_course(self, course: str) -> requests.Response:
+    def _get_soc_list_for_one_course(self, course: str) -> requests.Response:
         parameters = dict()
         department, course_num = course.rsplit(" ", 1)
         parameters["term"] = f'{self.year} {self.quarter}'
@@ -65,7 +66,12 @@ class Compiler:
         parameters["department"] = department
         parameters["courseNumber"] = course_num
         
-        return self._get_request(self.apisoc_url, parameters).json()
+        data = self._get_request(self.apisoc_url, parameters).json()
+        soc_list = data["schools"][0]["departments"][0]["courses"][0]["sections"]
+        for course_dict in soc_list:
+            course_dict["course"] = course
+
+        return soc_list
 
     
     # def _get_request(self, base_url, parameters=None) -> requests.Response:
@@ -87,4 +93,7 @@ if __name__ == "__main__":
     compiler.compile_required_courses()
     print(compiler.get_required_courses())
 
-    print(compiler._get_soc_for_one_course("I&C SCI 32"))
+    compiler.set_quarter("Fall")
+
+    data = compiler._get_soc_list_for_one_course("I&C SCI 32")
+    print(pd.DataFrame(data))
