@@ -7,7 +7,10 @@ class Filter:
         self.filtered_discussions_df = discussions_df
         self.course_prereqs = course_prereqs
         self.taken_courses = taken_courses
-
+    
+    def get_filtered_lectures_df(self) -> pd.DataFrame:
+        return self.filtered_lectures_df
+    
     def filter_out_prereqs(self) -> None:
         for index, row in self.filtered_lectures_df.iterrows():
             course = row["course"]
@@ -31,6 +34,4 @@ if __name__ == "__main__":
     compiler.compile_everything()
     filter = Filter(lectures_df=compiler.get_lectures_df(), labs_df=compiler.get_labs_df(), discussions_df=compiler.get_discussions_df(), course_prereqs=compiler.get_course_prereqs(), taken_courses=['MATH 2A', 'AP CALCULUS AB', "AP CALCULUS BC","MATH 2B"])
     filter.filter_out_prereqs()
-    print(filter.filtered_lectures_df)
-    print(filter.filtered_labs_df)
-    print(filter.filtered_discussions_df)
+    
