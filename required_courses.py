@@ -2,30 +2,45 @@
 # Currently only prints out the titles of the courses in the lower division section.
 import requests
 from bs4 import BeautifulSoup as bs
+import pandas as pd
+from datetime import datetime
 
 WEBCAT_BASE_URL = "https://catalogue.uci.edu/donaldbrenschoolofinformationandcomputersciences/departmentofcomputerscience/computerscience_bs/#requirementstext"
 
+
+WEBSOC_BASE_URL = "https://www.reg.uci.edu/perl/WebSoc" # easier to use rest api?
+APISOC_BASE_URL = "https://api.peterportal.org/rest/v0/schedule/soc"
+
+WEBPREREQ_BASE_URL = "https://www.reg.uci.edu/cob/prrqcgi" # can probs scrape directly from webpage
+
 class Compiler:
-    def __init__(self, webcat_url = None, websoc_url = None, webprereq_url = None):
+    def __init__(self, webcat_url = None, apisoc_url = None, webprereq_url = None):
         self.webcat_url = webcat_url
-        self.websoc_url = websoc_url
+        self.apisoc_url = apisoc_url
         self.webprereq_url = webprereq_url
 
-        self._webcat_html_doc = None
-        self._websoc_html_doc = None
-        self._webprereq_html_doc = None
+        self.headers = {"User-Agent": "Microsoft Edge/92.0.902.73"}
+        self.year = datetime.now().year
+        self.quarter = "Fall"
+
+        self._webcat_html_doc = None # might need for later
+        # self._websoc_html_doc = None
+        # self._webprereq_html_doc = None
 
         self._required_courses = []
+        self._available_courses = dict()
+    
+    def set_quarter(self, quarter: str) -> None:
+        self.quarter = quarter
 
-    def get_required_courses(self):
+    def get_required_courses(self) -> list[str]:
         return self._required_courses
 
-    def compile_html_docs(self):
-        self._webcat_html_doc = self._get_request(self.webcat_url)
-        # self._websoc_html_doc = self._get_request(self.websoc_url)
-        # self._webprereq_html_doc = self._get_request(self.webprereq_url)
+    def compile_html_docs(self) -> None:
+        self._webcat_html_doc = self._get_request(self.webcat_url).content
+        self._webprereq_html_doc = self._get_request(self.webprereq_url).content
 
-    def compile_required_courses(self):
+    def compile_required_courses(self) -> None:
         html_parser = bs(self._webcat_html_doc, 'html.parser')
         first_areaheader = html_parser.find('tr', class_='areaheader') # represents Lower division header 
         second_areaheader = first_areaheader.find_next('tr', class_='areaheader') # represents upper div header
@@ -39,15 +54,37 @@ class Compiler:
                 if course_title not in self._required_courses:
                     self._required_courses.append(course_title)
 
+    # def compile_available_required_courses(self):
+    #     html_parser = bs(self._websoc_html_doc, 'html.parser')
+
+    def _get_soc_for_one_course(self, course: str) -> requests.Response:
+        parameters = dict()
+        department, course_num = course.rsplit(" ", 1)
+        parameters["term"] = f'{self.year} {self.quarter}'
+
+        parameters["department"] = department
+        parameters["courseNumber"] = course_num
+        
+        return self._get_request(self.apisoc_url, parameters).json()
+
     
+    # def _get_request(self, base_url, parameters=None) -> requests.Response:
+    #     return requests.get(base_url, params = parameters, headers = self.headers).content
+        
 
-    def _get_request(self, base_url):
-        headers = {"User-Agent": "Microsoft Edge/92.0.902.73"}
-        return requests.get(base_url, headers=headers).content
-
+    def _get_request(self, base_url, parameters=None) -> requests.Response:
+        from urllib.parse import urljoin, urlencode
+        if parameters:
+            full_url = urljoin(base_url, '?' + urlencode(parameters))
+        else:
+            full_url = base_url
+        print(full_url)  # Outputs the full URL
+        return requests.get(full_url, headers = self.headers)
 
 if __name__ == "__main__":
-    compiler = Compiler(WEBCAT_BASE_URL)
+    compiler = Compiler(WEBCAT_BASE_URL, APISOC_BASE_URL, WEBPREREQ_BASE_URL)
     compiler.compile_html_docs()
     compiler.compile_required_courses()
     print(compiler.get_required_courses())
+
+    print(compiler._get_soc_for_one_course("I&C SCI 32"))
