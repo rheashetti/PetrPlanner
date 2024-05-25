@@ -26,10 +26,12 @@ class Compiler:
 
         self._required_courses = []
         self._lectures_df = pd.DataFrame() # makes things pretty
-        self._labs_and_discussions_df = pd.DataFrame() # makes things pretty
+        self._labs_df = pd.DataFrame() # makes things pretty
+        self._discussions_df = pd.DataFrame() # makes things pretty
 
         self._lectures_list = [] # for relational db
-        self._labs_and_discussions_list = [] # for relational db
+        self._labs_list = [] # for relational db
+        self._discussions_list = [] # for relational db
  
         self._course_prereqs = dict() # key: course, value: list of prereqs
         self._prereq_freq = dict() # key: prereq, value: frequency of prereq, use for ranking later
@@ -43,14 +45,20 @@ class Compiler:
     def get_lectures_df(self) -> pd.DataFrame: 
         return self._lectures_df
     
-    def get_labs_and_discussions_df(self) -> pd.DataFrame: 
-        return self._labs_and_discussions_df
+    def get_labs_df(self) -> pd.DataFrame: 
+        return self._labs_df
+    
+    def get_discussions_df(self) -> pd.DataFrame: 
+        return self._discussions_df
 
     def get_lectures_list(self) -> list[dict]: 
         return self._lectures_list
     
-    def get_labs_and_discussions_list(self) -> list[dict]:
-        return self._labs_and_discussions_list
+    def get_labs_list(self) -> list[dict]:
+        return self._labs_list
+    
+    def get_discussions_list(self) -> list[dict]: 
+        return self._discussions_list
 
     def get_course_prereqs(self) -> dict:
         return self._course_prereqs
@@ -87,7 +95,9 @@ class Compiler:
                 self.compile_one_course(course)
             except:
                 print("Course DNE: " + course)
-
+        self._lectures_df = self._lectures_df[['course'] + [col for col in self._lectures_df.columns if col != 'course']]
+        self._labs_df = self._labs_df[['course'] + [col for col in self._labs_df.columns if col != 'course']]
+        self._discussions_df = self._discussions_df[['course'] + [col for col in self._discussions_df.columns if col != 'course']]
 
     def compile_one_course(self, course: str) -> None:
         prereq_list, prereq_freq = self._get_preq_list_and_preq_freq_for_one_course(course)
@@ -99,10 +109,14 @@ class Compiler:
             if course_dict["sectionType"] == "Lec":
                 self._lectures_df = self._lectures_df._append(course_dict, ignore_index=True)
                 self._lectures_list.append(course_dict)
-            else:
-                self._labs_and_discussions_df = self._labs_and_discussions_df._append(course_dict, ignore_index=True)
+            elif course_dict["sectionType"] == "Lab":
+                self._labs_df = self._labs_df._append(course_dict, ignore_index=True)
 
-                self._labs_and_discussions_list.append(course_dict)
+                self._labs_list.append(course_dict)
+            else:
+
+                self._discussions_df = self._discussions_df._append(course_dict, ignore_index=True)
+                self._discussions_list.append(course_dict)
 
     def _get_preq_list_and_preq_freq_for_one_course(self, course: str) -> tuple[list[str], int]:
         data = self._get_request(self.apiprereq_url + '/' + course.replace(" ", "")).json()
@@ -121,7 +135,7 @@ class Compiler:
         data = self._get_request(self.apisoc_url, parameters).json()
         soc_list = data["schools"][0]["departments"][0]["courses"][0]["sections"]
         for course_dict in soc_list:
-            course_dict["correCourse"] = course
+            course_dict["course"] = course
         
         return soc_list
 
@@ -139,6 +153,7 @@ if __name__ == "__main__":
 
     print(compiler.get_required_courses())
     print(compiler.get_lectures_df())
-    print(compiler.get_labs_and_discussions_df())
+    print(compiler.get_labs_df())
+    print(compiler.get_discussions_df())
     print(compiler.get_course_prereqs())
     print(compiler.get_prereq_freq())
