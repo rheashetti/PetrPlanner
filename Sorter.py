@@ -96,4 +96,4 @@ if __name__ == "__main__":
     sorted = Sorter(sorting_parameters=["avg gpa", "avg rating", "avg difficulty", "would take again", "prereq frequency"], filtered_lectures_list=sorting.get_filtered_lectures_list(), gpa_dict=sorting.get_gpa_dict(), rating_dict=sorting.get_rating_dict(), difficulty_dict=sorting.get_difficulty_dict(), would_take_again_dict=sorting.get_would_take_again_dict(), prereq_freq_dict=compiler.get_prereq_freq())
 
     sorted.sort_list()
-    print(sorted.get_sorted_lectures_json())
+    print(sorted.get_sorted_lectures_df())

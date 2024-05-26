@@ -1,0 +1,96 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #fff7e1;
+}
+
+.body-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 40%;
+  text-align: center;
+}
+
+.body-content table th{
+  text-align: center;
+  padding: 10px 40px;
+}
+
+.body-content table td{
+  text-align: center;
+  padding: 10px 30px;
+}
+
+.table-container {
+  width: 100%;
+}
+
+table {
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 5%;
+}
+
+.button-container {
+  position: absolute;
+  display: flex;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  align-items: center;
+  justify-content: center;
+}
+
+.button-container button {
+  background-color: #ffffff;
+  font-family: 'Andale Mono', 'sans-serif';
+  font-size: 95%;
+  width: 200px;
+  height: 50px;
+}
+
+.loading-message {
+  font-family: 'Andale Mono', 'sans-serif';
+  font-size: 2em;
+}
+
+.ReactStrictMode {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100vh;
+}
+
+.Body {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+header {
+  display: flex;
+  justify-content: left;
+  background-color: rgb(212, 235, 255);
+  background-image: url('/Users/rheashetti/Downloads/cheering-anteaters.png');
+  background-repeat: no-repeat;
+  background-position: 95% 20px;
+  background-size: 300px 170px;
+  padding-left: 75px;
+  align-items: left;
+  height: 200px;
+  font-size: 2em;
+  font-family: 'Andale Mono', 'sans-serif';
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
