@@ -5,9 +5,10 @@ from urllib.parse import urljoin, urlencode
 import Filter, Compiler
 
 class Sorting_Compiler:
-    def __init__(self, sorting_parameters: list[str] = None, filtered_lectures_df: pd.DataFrame = None, apigpa_url: str = None):
+    def __init__(self, sorting_parameters: list[str] = None, filtered_lectures_list = None, apigpa_url: str = None):
         self.sorting_parameters = sorting_parameters #avg gpa, avg rating, avg difficulty, would take again, prereq frequency
-        self.filtered_lectures_df = filtered_lectures_df
+
+        self.filtered_lectures_list = filtered_lectures_list
         self.headers = {"User-Agent": "Microsoft Edge/92.0.902.73"}
         self.apigpa_url = apigpa_url
         
@@ -15,9 +16,9 @@ class Sorting_Compiler:
         self.rating_dict = dict()
         self.difficulty_dict = dict()
         self.would_take_again_dict = dict()
-    
-    def get_filtered_lectures_df(self) -> pd.DataFrame:
-        return self.filtered_lectures_df
+ 
+    def get_filtered_lectures_list(self) -> list[dict]:
+        return self.filtered_lectures_list
 
     def get_gpa_dict(self) -> dict:
         return self.gpa_dict
@@ -39,15 +40,15 @@ class Sorting_Compiler:
         self.compile_all_rmp_course_info()
 
     def compile_all_avg_gpa(self) -> None:
-        for index, row in self.filtered_lectures_df.iterrows():
-            course = row["course"]
-            instructor = row["instructors"][0]
-            self.compile_avg_gpa_for_one_course(course, instructor)
-    
+        [self.compile_avg_gpa_for_one_course(lecture["course"], lecture["instructors"][0]) for lecture in self.filtered_lectures_list]
+
     def compile_all_rmp_course_info(self) -> None:
-        for index, row in self.filtered_lectures_df.iterrows():
-            instructor = row["instructors"][0]
-            self.compile_rmp_course_info_for_one_course(instructor)
+        [self.compile_rmp_course_info_for_one_course(lecture["instructors"][0]) for lecture in self.filtered_lectures_list]
+    # def compile_all_avg_gpa(self) -> None:
+    #     self.filtered_lectures_df.apply(lambda row: self.compile_avg_gpa_for_one_course(row["course"], row["instructors"][0]), axis=1)
+
+    # def compile_all_rmp_course_info(self) -> None:
+    #     self.filtered_lectures_df.apply(lambda row: self.compile_rmp_course_info_for_one_course(row["instructors"][0]), axis=1)
     
     def compile_avg_gpa_for_one_course(self, course, instructor) -> float:
         parameters = dict()
@@ -81,12 +82,6 @@ class Sorting_Compiler:
 
     
 
-# sorting = Sorting(apigpa_url = "https://api.peterportal.org/rest/v0/grades/raw")
-# sorting.compile_avg_gpa("I&C SCI 32A", "THORNTON, A.")
-# sorting.compile_rmp_course_info("THORNTON, A.")
-# print(sorting.get_gpa_dict())
-# print(sorting.rating_dict)
-
 if __name__ == "__main__":
     WEBCAT_BASE_URL = "https://catalogue.uci.edu/donaldbrenschoolofinformationandcomputersciences/departmentofcomputerscience/computerscience_bs/#requirementstext"
 
@@ -96,9 +91,11 @@ if __name__ == "__main__":
     compiler = Compiler.Compiler(WEBCAT_BASE_URL, APISOC_BASE_URL, APIPREREQ_BASE_URL)
     compiler.set_quarter("Fall")
     compiler.compile_everything()
-    filter = Filter.Filter(lectures_df=compiler.get_lectures_df(), labs_df=compiler.get_labs_df(), discussions_df=compiler.get_discussions_df(), course_prereqs=compiler.get_course_prereqs(), taken_courses=['MATH 2A', 'AP CALCULUS AB', "AP CALCULUS BC","MATH 2B"])
+
+    filter = Filter.Filter(lectures_list=compiler.get_lectures_list(), labs_list=compiler.get_labs_list(), discussions_list=compiler.get_discussions_list(), course_prereqs=compiler.get_course_prereqs(), taken_courses=['MATH 2A', 'AP CALCULUS AB', "AP CALCULUS BC","MATH 2B"])
     filter.filter_out_prereqs()
-    sorting = Sorting_Compiler(filtered_lectures_df= filter.get_filtered_lectures_df(), apigpa_url = "https://api.peterportal.org/rest/v0/grades/raw")
+    
+    sorting = Sorting_Compiler(filtered_lectures_list= filter.get_filtered_lectures_list(), apigpa_url = "https://api.peterportal.org/rest/v0/grades/raw")
     sorting.compile_all_avg_gpa()
     sorting.compile_all_rmp_course_info()
     print(sorting.get_gpa_dict())

@@ -96,6 +96,8 @@ class Compiler:
                 self.compile_one_course(course)
             except:
                 print("Course DNE: " + course)
+    
+    def build_all_dfs(self) -> None:
         self._lectures_df = pd.DataFrame(self._lectures_list)
         self._labs_df = pd.DataFrame(self._labs_list)
         self._discussions_df = pd.DataFrame(self._discussions_list)
@@ -141,8 +143,6 @@ if __name__ == "__main__":
     compiler.set_quarter("Fall")
     compiler.compile_everything()
     print(compiler.get_required_courses())
-    print(compiler.get_lectures_df())
-    print(compiler.get_labs_df())
-    print(compiler.get_discussions_df())
+    
     print(compiler.get_course_prereqs())
     print(compiler.get_prereq_freq())
