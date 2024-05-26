@@ -1,5 +1,5 @@
 import sqlite3
-import compiler
+import Compiler as compiler
 
 class CourseLabSorter:
     def __init__(self, compiler: compiler.Compiler):
