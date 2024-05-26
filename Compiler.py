@@ -18,6 +18,7 @@ class Compiler:
         self.apisoc_url = apisoc_url
         self.apiprereq_url = apiprereq_url
 
+        self.session = requests.Session()
         self.headers = {"User-Agent": "Microsoft Edge/92.0.902.73"}
         self.year = datetime.now().year
         self.quarter = None
@@ -95,28 +96,20 @@ class Compiler:
                 self.compile_one_course(course)
             except:
                 print("Course DNE: " + course)
-        self._lectures_df = self._lectures_df[['course'] + [col for col in self._lectures_df.columns if col != 'course']]
-        self._labs_df = self._labs_df[['course'] + [col for col in self._labs_df.columns if col != 'course']]
-        self._discussions_df = self._discussions_df[['course'] + [col for col in self._discussions_df.columns if col != 'course']]
+    
+    def build_all_dfs(self) -> None:
+        self._lectures_df = pd.DataFrame(self._lectures_list)
+        self._labs_df = pd.DataFrame(self._labs_list)
+        self._discussions_df = pd.DataFrame(self._discussions_list)
 
     def compile_one_course(self, course: str) -> None:
         prereq_list, prereq_freq = self._get_preq_list_and_preq_freq_for_one_course(course)
         self._course_prereqs[course], self._prereq_freq[course] = prereq_list, prereq_freq
 
         soc_list = self._get_soc_list_for_one_course(course)
-        for course_dict in soc_list:
-            
-            if course_dict["sectionType"] == "Lec":
-                self._lectures_df = self._lectures_df._append(course_dict, ignore_index=True)
-                self._lectures_list.append(course_dict)
-            elif course_dict["sectionType"] == "Lab":
-                self._labs_df = self._labs_df._append(course_dict, ignore_index=True)
-
-                self._labs_list.append(course_dict)
-            else:
-
-                self._discussions_df = self._discussions_df._append(course_dict, ignore_index=True)
-                self._discussions_list.append(course_dict)
+        self._lectures_list += [course_dict for course_dict in soc_list if course_dict["sectionType"] == "Lec"]
+        self._labs_list += [course_dict for course_dict in soc_list if course_dict["sectionType"] == "Lab"]
+        self._discussions_list += [course_dict for course_dict in soc_list if course_dict["sectionType"] =="Dis"]
 
     def _get_preq_list_and_preq_freq_for_one_course(self, course: str) -> tuple[list[str], int]:
         data = self._get_request(self.apiprereq_url + '/' + course.replace(" ", "")).json()
@@ -134,8 +127,7 @@ class Compiler:
         
         data = self._get_request(self.apisoc_url, parameters).json()
         soc_list = data["schools"][0]["departments"][0]["courses"][0]["sections"]
-        for course_dict in soc_list:
-            course_dict["course"] = course
+        soc_list = [dict(course=course, **course_dict) for course_dict in soc_list]
         
         return soc_list
 
@@ -144,16 +136,13 @@ class Compiler:
             full_url = urljoin(base_url, '?' + urlencode(parameters))
         else:
             full_url = base_url
-        return requests.get(full_url, headers = self.headers)
+        return self.session.get(full_url, headers = self.headers)
 
 if __name__ == "__main__":
     compiler = Compiler(WEBCAT_BASE_URL, APISOC_BASE_URL, APIPREREQ_BASE_URL)
     compiler.set_quarter("Fall")
     compiler.compile_everything()
-
     print(compiler.get_required_courses())
-    print(compiler.get_lectures_df())
-    print(compiler.get_labs_df())
-    print(compiler.get_discussions_df())
+    
     print(compiler.get_course_prereqs())
     print(compiler.get_prereq_freq())
